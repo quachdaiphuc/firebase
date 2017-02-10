@@ -71,6 +71,33 @@ FriendlyChat.prototype.loadMessages = function() {
   this.messagesRef.limitToLast(100).on('child_changed', setMessage);
 };
 
+// Loads chat messages history and listens for upcoming ones.
+FriendlyChat.prototype.loadTable = function() {
+  // Reference to the /messages/ database path.
+  this.messagesRef = this.database.ref('apps');
+  // Make sure we remove all previous listeners.
+  this.messagesRef.off();
+
+  this.messagesRef.on('value', function(snapshot) {
+    var arr = snapshot.val();
+    var data = $.map(arr, function(el) { return el });
+    var out = '<tbody>';
+    for(var i = 0; i< data.length; i ++) {
+      out += '<tr>';
+      out += '<td>' + data[i].app_name + '</td>';
+      out += '<td class="verti-align"><img class="app-icon-table" src="' + data[i].app_icon + '"></td>';
+      out += '<td>' + data[i].status + '</td>';
+      out += '<td><button class="btn btn-info">Edit</button></td>';
+      out += '</tr>';
+    }
+
+    out += '</tbody>';
+
+    $('#example').append(out);
+    $('#example').dataTable();
+  });
+}
+
 // Sets up shortcuts to Firebase features and initiate firebase auth.
 FriendlyChat.prototype.initFirebase = function() {
   // Shortcuts to Firebase SDK features.
@@ -91,7 +118,8 @@ FriendlyChat.prototype.saveMessage = function(e) {
   var recommendList = {};
   for(var i = 0; i < child.length; i ++) {
     if(child[i].checked) {
-      var key = child[i].id;
+      var str = child[i].id;
+      var key = str.substring(3, str.length);
       recommendList[key] = 'true';
     }
   }
@@ -102,9 +130,16 @@ FriendlyChat.prototype.saveMessage = function(e) {
   var promotionList = {};
   for(var i = 0; i < child.length; i ++) {
     if(child[i].checked) {
-      var key = child[i].id;
+      var str = child[i].id;
+      var key = str.substring(3, str.length);
       promotionList[key] = 'true';
     }
+  }
+
+  // Check status
+  var status = 'false';
+  if(document.getElementById('slideStatus').checked) {
+    status = 'true';
   }
 
   this.messagesRef = this.database.ref('apps');
@@ -124,8 +159,8 @@ FriendlyChat.prototype.saveMessage = function(e) {
       long_description: this.longDescription.value,
       short_description: this.shortDescription.value,
       recommend_apps:recommendList,
-      promotion_apps:promotionList
-
+      promotion_apps:promotionList,
+      status: status
     }).then(function() {
       // Clear message text field and SEND button state.
       FriendlyChat.resetMaterialTextfield(this.appNameInput);
@@ -181,6 +216,7 @@ FriendlyChat.prototype.saveImageMessage = function(event) {
             var filePath = snapshot.metadata.fullPath;
             firebase.storage().ref().child(filePath).getDownloadURL().then(function(url){
                 document.getElementById('app_icon').value = url;
+              document.getElementById('app_icon').focus();
             });
             //data.update({app_icon: this.storage.ref(filePath).toString()});
           }.bind(this)).catch(function(error) {
@@ -224,6 +260,8 @@ FriendlyChat.prototype.onAuthStateChanged = function(user) {
 
     // We load currently existing chant messages.
     this.loadMessages();
+    this.loadTable();
+
   } else { // User is signed out!
     // Hide user's profile and sign-out button.
     this.userName.setAttribute('hidden', 'true');
@@ -266,12 +304,22 @@ FriendlyChat.prototype.displayMessage = function(key, val) {
   if (!div) {
     var container = document.createElement('div');
     container.innerHTML = '<li>'
-        + '<input class="check-app" type="checkbox" id="' + key + '" />'
-        + '<label title="'+ val.app_name +'" class="label-checkbox" for="' + key + '"><img src="' + val.app_icon +'" /></label>'
+        + '<input class="check-app" type="checkbox" id="rec' + key + '" />'
+        + '<label title="'+ val.app_name +'" class="label-checkbox" for="rec' + key + '"><img src="' + val.app_icon +'" /></label>'
         + '</li>';
     div = container.firstChild;
     this.recommend.appendChild(div);
-    this.promotion.appendChild(div);
+  }
+
+  var div2 = document.getElementById(key);
+  if (!div2) {
+    var container2 = document.createElement('div');
+    container2.innerHTML = '<li>'
+        + '<input class="check-app" type="checkbox" id="pro' + key + '" />'
+        + '<label title="'+ val.app_name +'" class="label-checkbox" for="pro' + key + '"><img src="' + val.app_icon +'" /></label>'
+        + '</li>';
+    div2 = container2.firstChild;
+    this.promotion.appendChild(div2);
   }
 };
 
