@@ -27,6 +27,7 @@ function FriendlyChat() {
   this.packageName = document.getElementById('package_name');
   this.longDescription = document.getElementById('long_description');
   this.shortDescription = document.getElementById('short_description');
+  this.appIcon = document.getElementById('app_icon');
 
   this.submitButton = document.getElementById('submit');
   this.submitImageButton = document.getElementById('submitImage');
@@ -67,27 +68,18 @@ FriendlyChat.prototype.loadMessages = function() {
     this.displayMessage(data.key, val);
   }.bind(this);
 
-  this.messagesRef.limitToLast(100).on('child_added', setMessage);
-  this.messagesRef.limitToLast(100).on('child_changed', setMessage);
-};
-
-// Loads chat messages history and listens for upcoming ones.
-FriendlyChat.prototype.loadTable = function() {
-  // Reference to the /messages/ database path.
-  this.messagesRef = this.database.ref('apps');
-  // Make sure we remove all previous listeners.
-  this.messagesRef.off();
-
+  // Load data table
   this.messagesRef.on('value', function(snapshot) {
     var arr = snapshot.val();
     var data = $.map(arr, function(el) { return el });
     var out = '<tbody>';
     for(var i = 0; i< data.length; i ++) {
+      var id = data[i].package_name.split('.').join('_');
       out += '<tr>';
       out += '<td>' + data[i].app_name + '</td>';
       out += '<td class="verti-align"><img class="app-icon-table" src="' + data[i].app_icon + '"></td>';
       out += '<td>' + data[i].status + '</td>';
-      out += '<td><button class="btn btn-info">Edit</button></td>';
+      out += '<td><a href="#messages-card-container" id="edit'+ id +'" class="btn btn-info" onclick="editApp(this.id)">Edit</a></td>';
       out += '</tr>';
     }
 
@@ -95,6 +87,34 @@ FriendlyChat.prototype.loadTable = function() {
 
     $('#example').append(out);
     $('#example').dataTable();
+  });
+
+  this.messagesRef.limitToLast(100).on('child_added', setMessage);
+  this.messagesRef.limitToLast(100).on('child_changed', setMessage);
+};
+
+function editApp(id) {
+  id = id.substring(4, id.length);
+  console.log(id);
+  var database = firebase.database();
+  database.ref('apps').child(id).on('value',function(snapshot) {
+    $('#app_name').val(snapshot.val().app_name);
+    $('#app_name').parent().addClass('is-dirty');
+
+    $('#app_feature').val(snapshot.val().app_feature);
+    $('#app_feature').parent().addClass('is-dirty');
+
+    $('#package_name').val(snapshot.val().package_name);
+    $('#package_name').parent().addClass('is-dirty');
+
+    $('#app_icon').val(snapshot.val().app_icon);
+    $('#app_icon').parent().addClass('is-dirty');
+
+    $('#long_description').val(snapshot.val().long_description);
+    $('#long_description').parent().addClass('is-dirty');
+
+    $('#short_description').val(snapshot.val().short_description);
+    $('#short_description').parent().addClass('is-dirty');
   });
 }
 
@@ -164,6 +184,11 @@ FriendlyChat.prototype.saveMessage = function(e) {
     }).then(function() {
       // Clear message text field and SEND button state.
       FriendlyChat.resetMaterialTextfield(this.appNameInput);
+      FriendlyChat.resetMaterialTextfield(this.appFeatureInput);
+      FriendlyChat.resetMaterialTextfield(this.appIcon);
+      FriendlyChat.resetMaterialTextfield(this.longDescription);
+      FriendlyChat.resetMaterialTextfield(this.shortDescription);
+      FriendlyChat.resetMaterialTextfield(this.packageName);
     }.bind(this)).catch(function(error) {
       console.error('Error writing new message to Firebase Database', error);
     });
@@ -260,7 +285,6 @@ FriendlyChat.prototype.onAuthStateChanged = function(user) {
 
     // We load currently existing chant messages.
     this.loadMessages();
-    this.loadTable();
 
   } else { // User is signed out!
     // Hide user's profile and sign-out button.
