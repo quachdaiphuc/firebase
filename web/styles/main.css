@@ -104,18 +104,21 @@ main, #messages-card {
   float: left;
 }
 
-#image-form {
+#image-form, #image-form-feature {
   display: flex;
   width: 46px;
   float: right;
   margin-top: 190px;
 }
-#message-form .mdl-textfield {
+#message-form .mdl-textfield, #image-form-feature .mdl-textfield {
   width: calc(100% - 10px);
 }
-#message-form button, #image-form button {
+#message-form button, #image-form button, #image-form-feature button {
   width: 100px;
   margin: 15px 0 0 10px;
+}
+#image-form-feature {
+  margin-top: -180px;
 }
 .mdl-textfield__input {
   width: 95%;
@@ -155,19 +158,19 @@ main, #messages-card {
   padding-right: 10px;
   padding-left: 20px;
 }
-#image-form #submitImage {
+#image-form #submitImage, #image-form-feature #submitFeatureImage {
   width: auto;
   padding: 0 6px 0 1px;
   min-width: 0;
 }
-#image-form #submitImage .material-icons {
+#image-form #submitImage .material-icons , #image-form-feature #submitFeatureImage .material-icons{
   top: -1px;
 }
 .message img {
   max-width: 300px;
   max-height: 200px;
 }
-#mediaCapture {
+#mediaCapture, #featureCapture {
   display: none;
 }
 @media screen and (max-width: 610px) {
