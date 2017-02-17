@@ -33,6 +33,12 @@ function FriendlyChat() {
   this.submitImageButton = document.getElementById('submitImage');
   this.imageForm = document.getElementById('image-form');
   this.mediaCapture = document.getElementById('mediaCapture');
+
+  this.submitFeatureImage = document.getElementById('submitFeatureImage');
+  this.imageFormFeature = document.getElementById('image-form-feature');
+  this.featureCapture = document.getElementById('featureCapture');
+
+
   this.userPic = document.getElementById('user-pic');
   this.userName = document.getElementById('user-name');
   this.signInButton = document.getElementById('sign-in');
@@ -47,11 +53,17 @@ function FriendlyChat() {
   this.signOutButton.addEventListener('click', this.signOut.bind(this));
   this.signInButton.addEventListener('click', this.signIn.bind(this));
 
-  // Events for image upload.
+  // Events for image upload app icon.
   this.submitImageButton.addEventListener('click', function() {
     this.mediaCapture.click();
   }.bind(this));
-  this.mediaCapture.addEventListener('change', this.saveImageMessage.bind(this));
+  this.mediaCapture.addEventListener('change', this.saveAppIcon.bind(this));
+
+  // Events for image upload feature image
+  this.submitFeatureImage.addEventListener('click', function() {
+    this.featureCapture.click();
+  }.bind(this));
+  this.featureCapture.addEventListener('change', this.saveFeatureImage.bind(this));
 
   this.initFirebase();
 }
@@ -74,10 +86,11 @@ FriendlyChat.prototype.loadMessages = function() {
     var data = $.map(arr, function(el) { return el });
     var out = '<tbody>';
     for(var i = 0; i< data.length; i ++) {
+      var defaultImage = data[i].app_icon != "" ? data[i].app_icon : 'images/noPicture.png';
       var id = data[i].package_name.split('.').join('_');
       out += '<tr>';
       out += '<td>' + data[i].app_name + '</td>';
-      out += '<td class="verti-align"><img class="app-icon-table" src="' + data[i].app_icon + '"></td>';
+      out += '<td class="verti-align"><img class="app-icon-table" src="' + defaultImage + '"></td>';
       out += '<td>' + data[i].status + '</td>';
       out += '<td><a href="#messages-card-container" id="edit'+ id +'" class="btn btn-info" onclick="editApp(this.id)">Edit</a></td>';
       out += '</tr>';
@@ -102,12 +115,14 @@ function editApp(id) {
     $('#app_name').parent().addClass('is-dirty');
 
     $('#app_feature').val(snapshot.val().app_feature);
+    $('#preview-feature').attr('src', snapshot.val().app_feature != '' ? snapshot.val().app_feature : 'images/noPicture.png');
     $('#app_feature').parent().addClass('is-dirty');
 
     $('#package_name').val(snapshot.val().package_name);
     $('#package_name').parent().addClass('is-dirty');
 
     $('#app_icon').val(snapshot.val().app_icon);
+    $('#preview-icon').attr('src', snapshot.val().app_icon != '' ? snapshot.val().app_icon : 'images/noPicture.png');
     $('#app_icon').parent().addClass('is-dirty');
 
     $('#long_description').val(snapshot.val().long_description);
@@ -115,6 +130,46 @@ function editApp(id) {
 
     $('#short_description').val(snapshot.val().short_description);
     $('#short_description').parent().addClass('is-dirty');
+
+    // set status
+    if(snapshot.val().status == 'true') {
+      $('#slideStatus').prop('checked', true);
+    } else {
+      $('#slideStatus').prop('checked', false);
+    }
+
+    reloadRecommendAndPromotion();
+
+    // set recommend checked status
+    if(snapshot.val().recommend_apps != 'undefined') {
+      var recommend = snapshot.val().recommend_apps;
+        $.each(recommend, function (key, val) {
+          $('#rec' + key).prop('checked', true);
+        });
+    }
+
+    // set promotion checked status
+    if(snapshot.val().promotion_apps != 'undefined') {
+      var promotion = snapshot.val().promotion_apps;
+        $.each(promotion, function (key, val) {
+          $('#pro' + key).prop('checked', true);
+        });
+    }
+
+  });
+}
+
+function reloadRecommendAndPromotion() {
+  $('#recommend').find('li').each(function() {
+    $(this).find('input').each(function() {
+      $(this).prop('checked', false);
+    })
+  });
+
+  $('#promotion').find('li').each(function() {
+    $(this).find('input').each(function() {
+      $(this).prop('checked', false);
+    })
   });
 }
 
@@ -189,6 +244,9 @@ FriendlyChat.prototype.saveMessage = function(e) {
       FriendlyChat.resetMaterialTextfield(this.longDescription);
       FriendlyChat.resetMaterialTextfield(this.shortDescription);
       FriendlyChat.resetMaterialTextfield(this.packageName);
+      $('#preview-icon').attr('src', 'images/noPicture.png');
+      $('#preview-feature').attr('src', 'images/noPicture.png');
+      
     }.bind(this)).catch(function(error) {
       console.error('Error writing new message to Firebase Database', error);
     });
@@ -210,7 +268,7 @@ FriendlyChat.prototype.setImageUrl = function(imageUri, imgElement) {
 
 // Saves a new message containing an image URI in Firebase.
 // This first saves the image in Firebase storage.
-FriendlyChat.prototype.saveImageMessage = function(event) {
+FriendlyChat.prototype.saveAppIcon = function(event) {
   var file = event.target.files[0];
 
   // Clear the selection in the file picker input.
@@ -240,14 +298,61 @@ FriendlyChat.prototype.saveImageMessage = function(event) {
             // Get the file's Storage URI and update the chat message placeholder.
             var filePath = snapshot.metadata.fullPath;
             firebase.storage().ref().child(filePath).getDownloadURL().then(function(url){
-                document.getElementById('app_icon').value = url;
+              document.getElementById('app_icon').value = url;
+              $('#preview-icon').attr('src', url);
               document.getElementById('app_icon').focus();
+              $('#app_icon').parent().addClass('is-dirty');
             });
             //data.update({app_icon: this.storage.ref(filePath).toString()});
           }.bind(this)).catch(function(error) {
             console.error('There was an error uploading a file to Firebase Storage:', error);
           });
     this.appIcon = document.getElementById('app_icon');
+  }
+};
+
+
+// Save feature image
+FriendlyChat.prototype.saveFeatureImage = function(event) {
+  var file = event.target.files[0];
+
+  // Clear the selection in the file picker input.
+  this.imageForm.reset();
+
+  // Check if the file is an image.
+  if (!file.type.match('image.*')) {
+    var data = {
+      message: 'You can only share images',
+      timeout: 2000
+    };
+    this.signInSnackbar.MaterialSnackbar.showSnackbar(data);
+    return;
+  }
+
+  // Check if the user is signed-in
+  if (this.checkSignedInWithMessage()) {
+    this.messagesRef = this.database.ref('apps');
+    // We add a message with a loading icon that will get updated with the shared image.
+    var currentUser = this.auth.currentUser;
+
+    // Upload the image to Firebase Storage.
+    this.storage.ref(currentUser.uid + '/' + Date.now() + '/' + file.name)
+        .put(file, {contentType: file.type})
+        .then(function(snapshot) {
+
+          // Get the file's Storage URI and update the chat message placeholder.
+          var filePath = snapshot.metadata.fullPath;
+          firebase.storage().ref().child(filePath).getDownloadURL().then(function(url){
+            document.getElementById('app_feature').value = url;
+            $('#preview-feature').attr('src', url);
+            document.getElementById('app_feature').focus();
+            $('#app_feature').parent().addClass('is-dirty');
+          });
+          //data.update({app_icon: this.storage.ref(filePath).toString()});
+        }.bind(this)).catch(function(error) {
+      console.error('There was an error uploading a file to Firebase Storage:', error);
+    });
+    this.appIcon = document.getElementById('app_feature');
   }
 };
 
@@ -324,12 +429,13 @@ FriendlyChat.LOADING_IMAGE_URL = 'https://www.google.com/images/spin-32.gif';
 
 // Displays a Message in the UI.
 FriendlyChat.prototype.displayMessage = function(key, val) {
+  var defaultImage = val.app_icon != "" ? val.app_icon : 'images/noPicture.png';
   var div = document.getElementById(key);
   if (!div) {
     var container = document.createElement('div');
     container.innerHTML = '<li>'
         + '<input class="check-app" type="checkbox" id="rec' + key + '" />'
-        + '<label title="'+ val.app_name +'" class="label-checkbox" for="rec' + key + '"><img src="' + val.app_icon +'" /></label>'
+        + '<label title="'+ val.app_name +'" class="label-checkbox" for="rec' + key + '"><img src="' + defaultImage +'" /></label>'
         + '</li>';
     div = container.firstChild;
     this.recommend.appendChild(div);
@@ -340,7 +446,7 @@ FriendlyChat.prototype.displayMessage = function(key, val) {
     var container2 = document.createElement('div');
     container2.innerHTML = '<li>'
         + '<input class="check-app" type="checkbox" id="pro' + key + '" />'
-        + '<label title="'+ val.app_name +'" class="label-checkbox" for="pro' + key + '"><img src="' + val.app_icon +'" /></label>'
+        + '<label title="'+ val.app_name +'" class="label-checkbox" for="pro' + key + '"><img src="' + defaultImage +'" /></label>'
         + '</li>';
     div2 = container2.firstChild;
     this.promotion.appendChild(div2);

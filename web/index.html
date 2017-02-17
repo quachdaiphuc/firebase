@@ -79,6 +79,8 @@
               <input class="mdl-textfield__input" type="text" id="app_feature">
               <label class="mdl-textfield__label" for="app_feature">App feature...</label>
             </div>
+            <img id="preview-feature" class="preview-image" src="images/noPicture.png" alt="">
+
             <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
               <input class="mdl-textfield__input" type="text" id="package_name">
               <label class="mdl-textfield__label" for="package_name">Package name...</label>
@@ -87,6 +89,8 @@
               <input class="mdl-textfield__input" type="text" id="app_icon">
               <label class="mdl-textfield__label" for="app_icon">App icon...</label>
             </div>
+            <img id="preview-icon" class="preview-image" src="images/noPicture.png" alt="">
+
             <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
               <textarea class="mdl-textfield__input" id="long_description"></textarea>
               <label class="mdl-textfield__label" for="long_description">Long description...</label>
@@ -106,12 +110,12 @@
                 <!-- end .slideThree -->
               </section>
             </div>
-            <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
-              <label class="">Recommend apps</label>
+            <div>
+              <h4>Recommend apps</h4>
                 <ul id="recommend"></ul>
             </div>
-            <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
-              <label class="">Promotion apps</label>
+            <div>
+              <h4>Promotion apps</h4>
                 <ul id="promotion"></ul>
             </div>
 
@@ -147,7 +151,7 @@
     </div>
 
     <!--List apps-->
-    <div class="mdl-cell mdl-cell--12-col mdl-grid">
+    <div class="mdl-cell mdl-cell--12-col mdl-grid table-list">
       <div class="mdl-card mdl-shadow--2dp mdl-cell mdl-cell--12-col mdl-cell--6-col-tablet">
         <div class="mdl-color-text--grey-600 padding10">
           <table id="example" class="display" cellspacing="0" width="100%">
