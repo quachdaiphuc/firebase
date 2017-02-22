@@ -15,8 +15,8 @@
  */
 'use strict';
 
-// Initializes FriendlyChat.
-function FriendlyChat() {
+// Initializes AppManage.
+function AppManage() {
   this.checkSetup();
 
   // Shortcuts to DOM Elements.
@@ -49,7 +49,7 @@ function FriendlyChat() {
   this.promotion = document.getElementById('promotion');
 
   // Saves message on form submit.
-  this.messageForm.addEventListener('submit', this.saveMessage.bind(this));
+  this.messageForm.addEventListener('submit', this.saveData.bind(this));
   this.signOutButton.addEventListener('click', this.signOut.bind(this));
   this.signInButton.addEventListener('click', this.signIn.bind(this));
 
@@ -68,7 +68,7 @@ function FriendlyChat() {
   this.initFirebase();
 }
 // Loads chat messages history and listens for upcoming ones.
-FriendlyChat.prototype.loadMessages = function() {
+AppManage.prototype.loadMessages = function() {
   // Reference to the /messages/ database path.
   this.messagesRef = this.database.ref('apps');
   // Make sure we remove all previous listeners.
@@ -108,7 +108,6 @@ FriendlyChat.prototype.loadMessages = function() {
 
 function editApp(id) {
   id = id.substring(4, id.length);
-  console.log(id);
   var database = firebase.database();
   database.ref('apps').child(id).on('value',function(snapshot) {
     $('#app_name').val(snapshot.val().app_name);
@@ -174,7 +173,7 @@ function reloadRecommendAndPromotion() {
 }
 
 // Sets up shortcuts to Firebase features and initiate firebase auth.
-FriendlyChat.prototype.initFirebase = function() {
+AppManage.prototype.initFirebase = function() {
   // Shortcuts to Firebase SDK features.
   this.auth = firebase.auth();
   this.database = firebase.database();
@@ -184,7 +183,7 @@ FriendlyChat.prototype.initFirebase = function() {
 };
 
 // Saves a new message on the Firebase DB.
-FriendlyChat.prototype.saveMessage = function(e) {
+AppManage.prototype.saveData = function(e) {
   e.preventDefault();
 
   // Recommend apps
@@ -218,8 +217,20 @@ FriendlyChat.prototype.saveMessage = function(e) {
   }
 
   this.messagesRef = this.database.ref('apps');
+
+  //varlidate
+  if(this.appNameInput.value == '') {
+    alert('App name is not null');
+    return false;
+  }
+
+  if(this.packageName.value == '') {
+    alert('Package name is not null');
+    return false;
+  }
+
   // Check that the user entered a message and is signed in.
-  if (this.appNameInput.value && this.checkSignedInWithMessage()) {
+  if (this.appNameInput.value && this.checkSignedInWithData()) {
     var currentUser = this.auth.currentUser;
 
 
@@ -238,15 +249,15 @@ FriendlyChat.prototype.saveMessage = function(e) {
       status: status
     }).then(function() {
       // Clear message text field and SEND button state.
-      FriendlyChat.resetMaterialTextfield(this.appNameInput);
-      FriendlyChat.resetMaterialTextfield(this.appFeatureInput);
-      FriendlyChat.resetMaterialTextfield(this.appIcon);
-      FriendlyChat.resetMaterialTextfield(this.longDescription);
-      FriendlyChat.resetMaterialTextfield(this.shortDescription);
-      FriendlyChat.resetMaterialTextfield(this.packageName);
+      AppManage.resetMaterialTextfield(this.appNameInput);
+      AppManage.resetMaterialTextfield(this.appFeatureInput);
+      AppManage.resetMaterialTextfield(this.appIcon);
+      AppManage.resetMaterialTextfield(this.longDescription);
+      AppManage.resetMaterialTextfield(this.shortDescription);
+      AppManage.resetMaterialTextfield(this.packageName);
       $('#preview-icon').attr('src', 'images/noPicture.png');
       $('#preview-feature').attr('src', 'images/noPicture.png');
-      
+      location.reload();
     }.bind(this)).catch(function(error) {
       console.error('Error writing new message to Firebase Database', error);
     });
@@ -254,10 +265,10 @@ FriendlyChat.prototype.saveMessage = function(e) {
 };
 
 // Sets the URL of the given img element with the URL of the image stored in Firebase Storage.
-FriendlyChat.prototype.setImageUrl = function(imageUri, imgElement) {
+AppManage.prototype.setImageUrl = function(imageUri, imgElement) {
   // If the image is a Firebase Storage URI we fetch the URL.
   if (imageUri.startsWith('gs://')) {
-    imgElement.src = FriendlyChat.LOADING_IMAGE_URL; // Display a loading image first.
+    imgElement.src = AppManage.LOADING_IMAGE_URL; // Display a loading image first.
     this.storage.refFromURL(imageUri).getMetadata().then(function(metadata) {
       imgElement.src = metadata.downloadURLs[0];
     });
@@ -268,7 +279,7 @@ FriendlyChat.prototype.setImageUrl = function(imageUri, imgElement) {
 
 // Saves a new message containing an image URI in Firebase.
 // This first saves the image in Firebase storage.
-FriendlyChat.prototype.saveAppIcon = function(event) {
+AppManage.prototype.saveAppIcon = function(event) {
   var file = event.target.files[0];
 
   // Clear the selection in the file picker input.
@@ -285,7 +296,7 @@ FriendlyChat.prototype.saveAppIcon = function(event) {
   }
 
   // Check if the user is signed-in
-  if (this.checkSignedInWithMessage()) {
+  if (this.checkSignedInWithData()) {
     this.messagesRef = this.database.ref('apps');
     // We add a message with a loading icon that will get updated with the shared image.
     var currentUser = this.auth.currentUser;
@@ -313,7 +324,7 @@ FriendlyChat.prototype.saveAppIcon = function(event) {
 
 
 // Save feature image
-FriendlyChat.prototype.saveFeatureImage = function(event) {
+AppManage.prototype.saveFeatureImage = function(event) {
   var file = event.target.files[0];
 
   // Clear the selection in the file picker input.
@@ -330,7 +341,7 @@ FriendlyChat.prototype.saveFeatureImage = function(event) {
   }
 
   // Check if the user is signed-in
-  if (this.checkSignedInWithMessage()) {
+  if (this.checkSignedInWithData()) {
     this.messagesRef = this.database.ref('apps');
     // We add a message with a loading icon that will get updated with the shared image.
     var currentUser = this.auth.currentUser;
@@ -356,21 +367,21 @@ FriendlyChat.prototype.saveFeatureImage = function(event) {
   }
 };
 
-// Signs-in Friendly Chat.
-FriendlyChat.prototype.signIn = function() {
+// Signs-in App Manage.
+AppManage.prototype.signIn = function() {
   // Sign in Firebase using popup auth and Google as the identity provider.
   var provider = new firebase.auth.GoogleAuthProvider();
   this.auth.signInWithPopup(provider);
 };
 
-// Signs-out of Friendly Chat.
-FriendlyChat.prototype.signOut = function() {
+// Signs-out of App Manage.
+AppManage.prototype.signOut = function() {
   // Sign out of Firebase.
   this.auth.signOut();
 };
 
 // Triggers when the auth state change for instance when the user signs-in or signs-out.
-FriendlyChat.prototype.onAuthStateChanged = function(user) {
+AppManage.prototype.onAuthStateChanged = function(user) {
   if (user) { // User is signed in!
     // Get profile pic and user's name from the Firebase user object.
     var profilePicUrl = user.photoURL;
@@ -403,7 +414,7 @@ FriendlyChat.prototype.onAuthStateChanged = function(user) {
 };
 
 // Returns true if user is signed-in. Otherwise false and displays a message.
-FriendlyChat.prototype.checkSignedInWithMessage = function() {
+AppManage.prototype.checkSignedInWithData = function() {
   // Return true if the user is signed in Firebase
   if (this.auth.currentUser) {
     return true;
@@ -419,16 +430,16 @@ FriendlyChat.prototype.checkSignedInWithMessage = function() {
 };
 
 // Resets the given MaterialTextField.
-FriendlyChat.resetMaterialTextfield = function(element) {
+AppManage.prototype.resetMaterialTextfield = function(element) {
   element.value = '';
   element.parentNode.MaterialTextfield.boundUpdateClassesHandler();
 };
 
 // A loading image URL.
-FriendlyChat.LOADING_IMAGE_URL = 'https://www.google.com/images/spin-32.gif';
+AppManage.LOADING_IMAGE_URL = 'https://www.google.com/images/spin-32.gif';
 
 // Displays a Message in the UI.
-FriendlyChat.prototype.displayMessage = function(key, val) {
+AppManage.prototype.displayMessage = function(key, val) {
   var defaultImage = val.app_icon != "" ? val.app_icon : 'images/noPicture.png';
   var div = document.getElementById(key);
   if (!div) {
@@ -454,7 +465,7 @@ FriendlyChat.prototype.displayMessage = function(key, val) {
 };
 
 // Checks that the Firebase SDK has been correctly setup and configured.
-FriendlyChat.prototype.checkSetup = function() {
+AppManage.prototype.checkSetup = function() {
   if (!window.firebase || !(firebase.app instanceof Function) || !window.config) {
     window.alert('You have not configured and imported the Firebase SDK. ' +
         'Make sure you go through the codelab setup instructions.');
@@ -469,5 +480,5 @@ FriendlyChat.prototype.checkSetup = function() {
 };
 
 window.onload = function() {
-  window.friendlyChat = new FriendlyChat();
+  window.AppManage = new AppManage();
 };
