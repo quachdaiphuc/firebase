@@ -65,6 +65,14 @@ function AppManage() {
   }.bind(this));
   this.featureCapture.addEventListener('change', this.saveFeatureImage.bind(this));
 
+  this.packageName.addEventListener('change', function() {
+    alert(1);
+    if(this.val() != '') {
+      alert(1);
+      this.submitImageButton.removeAttribute("disabled");
+    }
+  });
+
   this.initFirebase();
 }
 // Loads chat messages history and listens for upcoming ones.
@@ -142,6 +150,7 @@ function editApp(id) {
     // set recommend checked status
     if(snapshot.val().recommend_apps != 'undefined') {
       var recommend = snapshot.val().recommend_apps;
+      $('#rec' + id).parent().remove();
         $.each(recommend, function (key, val) {
           $('#rec' + key).prop('checked', true);
           $('#rec_order' + key).val(val.order);
@@ -151,6 +160,7 @@ function editApp(id) {
     // set promotion checked status
     if(snapshot.val().promotion_apps != 'undefined') {
       var promotion = snapshot.val().promotion_apps;
+      $('#pro' + id).parent().remove();
         $.each(promotion, function (key, val) {
           $('#pro' + key).prop('checked', true);
           $('#pro_order' + key).val(val.order);
@@ -204,7 +214,7 @@ AppManage.prototype.saveData = function(e) {
       var key = str.substring(3, str.length);
       var order = $('#rec_order' + key).val();
       order = ( order == '' || order == 'undefined' ) ? 0 : order;
-      recommendList[key] = {app_id: key, order: order, status: "true" };
+      recommendList[key] = {order: order, status: "true" };
     }
   }
 
@@ -218,7 +228,7 @@ AppManage.prototype.saveData = function(e) {
       var key = str.substring(3, str.length);
       var order = $('#pro_order' + key).val();
       order = ( order == '' || order == 'undefined' ) ? 0 : order;
-      promotionList[key] = {app_id: key, order: order, status: "true" };
+      promotionList[key] = {order: order, status: "true" };
     }
   }
 
