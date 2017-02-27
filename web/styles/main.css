@@ -267,6 +267,16 @@ label.label-checkbox img {
   z-index: -1;
 }
 
+input[type="number"][id^="rec_order"] {
+  width: 123px;
+  margin-left: 10px;
+}
+
+input[type="number"][id^="pro_order"] {
+  width: 123px;
+  margin-left: 10px;
+}
+
 /* slide checkbox*/
 .slideThree {
   width: 80px;

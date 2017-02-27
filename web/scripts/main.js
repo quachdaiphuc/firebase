@@ -70,7 +70,7 @@ function AppManage() {
 // Loads chat messages history and listens for upcoming ones.
 AppManage.prototype.loadMessages = function() {
   // Reference to the /messages/ database path.
-  this.messagesRef = this.database.ref('apps');
+  this.messagesRef = this.database.ref('test_apps');
   // Make sure we remove all previous listeners.
   this.messagesRef.off();
 
@@ -109,7 +109,7 @@ AppManage.prototype.loadMessages = function() {
 function editApp(id) {
   id = id.substring(4, id.length);
   var database = firebase.database();
-  database.ref('apps').child(id).on('value',function(snapshot) {
+  database.ref('test_apps').child(id).on('value',function(snapshot) {
     $('#app_name').val(snapshot.val().app_name);
     $('#app_name').parent().addClass('is-dirty');
 
@@ -131,7 +131,7 @@ function editApp(id) {
     $('#short_description').parent().addClass('is-dirty');
 
     // set status
-    if(snapshot.val().status == 'true') {
+    if(snapshot.val().status.toString() == 'true') {
       $('#slideStatus').prop('checked', true);
     } else {
       $('#slideStatus').prop('checked', false);
@@ -144,6 +144,7 @@ function editApp(id) {
       var recommend = snapshot.val().recommend_apps;
         $.each(recommend, function (key, val) {
           $('#rec' + key).prop('checked', true);
+          $('#rec_order' + key).val(val.order);
         });
     }
 
@@ -152,6 +153,7 @@ function editApp(id) {
       var promotion = snapshot.val().promotion_apps;
         $.each(promotion, function (key, val) {
           $('#pro' + key).prop('checked', true);
+          $('#pro_order' + key).val(val.order);
         });
     }
 
@@ -160,14 +162,20 @@ function editApp(id) {
 
 function reloadRecommendAndPromotion() {
   $('#recommend').find('li').each(function() {
-    $(this).find('input').each(function() {
+    $(this).find('input[type=checkbox]').each(function() {
       $(this).prop('checked', false);
+    })
+    $(this).find('input[type=number]').each(function() {
+      $(this).val('');
     })
   });
 
   $('#promotion').find('li').each(function() {
-    $(this).find('input').each(function() {
+    $(this).find('input[type=checkbox]').each(function() {
       $(this).prop('checked', false);
+    })
+    $(this).find('input[type=number]').each(function() {
+      $(this).val('');
     })
   });
 }
@@ -194,7 +202,9 @@ AppManage.prototype.saveData = function(e) {
     if(child[i].checked) {
       var str = child[i].id;
       var key = str.substring(3, str.length);
-      recommendList[key] = 'true';
+      var order = $('#rec_order' + key).val();
+      order = ( order == '' || order == 'undefined' ) ? 0 : order;
+      recommendList[key] = {app_id: key, order: order, status: "true" };
     }
   }
 
@@ -206,7 +216,9 @@ AppManage.prototype.saveData = function(e) {
     if(child[i].checked) {
       var str = child[i].id;
       var key = str.substring(3, str.length);
-      promotionList[key] = 'true';
+      var order = $('#pro_order' + key).val();
+      order = ( order == '' || order == 'undefined' ) ? 0 : order;
+      promotionList[key] = {app_id: key, order: order, status: "true" };
     }
   }
 
@@ -216,7 +228,7 @@ AppManage.prototype.saveData = function(e) {
     status = 'true';
   }
 
-  this.messagesRef = this.database.ref('apps');
+  this.messagesRef = this.database.ref('test_apps');
 
   //varlidate
   if(this.appNameInput.value == '') {
@@ -297,7 +309,7 @@ AppManage.prototype.saveAppIcon = function(event) {
 
   // Check if the user is signed-in
   if (this.checkSignedInWithData()) {
-    this.messagesRef = this.database.ref('apps');
+    this.messagesRef = this.database.ref('test_apps');
     // We add a message with a loading icon that will get updated with the shared image.
     var currentUser = this.auth.currentUser;
 
@@ -342,7 +354,7 @@ AppManage.prototype.saveFeatureImage = function(event) {
 
   // Check if the user is signed-in
   if (this.checkSignedInWithData()) {
-    this.messagesRef = this.database.ref('apps');
+    this.messagesRef = this.database.ref('test_apps');
     // We add a message with a loading icon that will get updated with the shared image.
     var currentUser = this.auth.currentUser;
 
@@ -447,6 +459,7 @@ AppManage.prototype.displayMessage = function(key, val) {
     container.innerHTML = '<li>'
         + '<input class="check-app" type="checkbox" id="rec' + key + '" />'
         + '<label title="'+ val.app_name +'" class="label-checkbox" for="rec' + key + '"><img src="' + defaultImage +'" /></label>'
+        + '<input type="number" id="rec_order' + key + '"/>'
         + '</li>';
     div = container.firstChild;
     this.recommend.appendChild(div);
@@ -458,6 +471,7 @@ AppManage.prototype.displayMessage = function(key, val) {
     container2.innerHTML = '<li>'
         + '<input class="check-app" type="checkbox" id="pro' + key + '" />'
         + '<label title="'+ val.app_name +'" class="label-checkbox" for="pro' + key + '"><img src="' + defaultImage +'" /></label>'
+        + '<input type="number" id="pro_order' + key + '"/>'
         + '</li>';
     div2 = container2.firstChild;
     this.promotion.appendChild(div2);
