@@ -150,6 +150,14 @@ function editApp(id) {
     $('#package_name').val(snapshot.val().package_name);
     $('#package_name').parent().addClass('is-dirty');
 
+    if($('#package_name').val() != '') {
+      $('#submitImage').attr("disabled", false);
+      $('#submitFeatureImage').attr("disabled", false);
+    } else {
+      $('#submitImage').attr("disabled", true);
+      $('#submitFeatureImage').attr("disabled", true);
+    }
+
     $('#app_icon').val(snapshot.val().app_icon);
     $('#preview-icon').attr('src', snapshot.val().app_icon != '' ? snapshot.val().app_icon : 'images/noPicture.png');
     $('#app_icon').parent().addClass('is-dirty');
