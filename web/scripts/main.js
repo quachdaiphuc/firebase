@@ -48,6 +48,9 @@ function AppManage() {
   this.recommend = document.getElementById('recommend');
   this.promotion = document.getElementById('promotion');
 
+  this.selRecommend = document.getElementById('sel_recommend');
+  this.selPromotion = document.getElementById('sel_promotion');
+
   // Saves message on form submit.
   this.messageForm.addEventListener('submit', this.saveData.bind(this));
   this.signOutButton.addEventListener('click', this.signOut.bind(this));
@@ -65,13 +68,30 @@ function AppManage() {
   }.bind(this));
   this.featureCapture.addEventListener('change', this.saveFeatureImage.bind(this));
 
-  this.packageName.addEventListener('change', function() {
-    alert(1);
-    if(this.val() != '') {
-      alert(1);
-      this.submitImageButton.removeAttribute("disabled");
+  this.packageName.addEventListener('keyup', function() {
+    if($('#package_name').val() != '') {
+      $('#submitImage').attr("disabled", false);
+      $('#submitFeatureImage').attr("disabled", false);
+    } else {
+      $('#submitImage').attr("disabled", true);
+      $('#submitFeatureImage').attr("disabled", true);
     }
   });
+
+  // Event sort recommend
+  this.selRecommend.addEventListener('change', function() {
+    var value = $(this).val();
+    sortUsingNestedText($('#recommend'), 'li', 'input.order_class', value);
+  });
+
+  // Event sort promotion
+  this.selPromotion.addEventListener('change', function() {
+    var value = $(this).val();
+    sortUsingNestedText($('#promotion'), 'li', 'input.order_class', value);
+  });
+
+  this.copyNodeRecommend = '';
+  this.copyNodePromotion = '';
 
   this.initFirebase();
 }
@@ -150,7 +170,9 @@ function editApp(id) {
     // set recommend checked status
     if(snapshot.val().recommend_apps != 'undefined') {
       var recommend = snapshot.val().recommend_apps;
-      $('#rec' + id).parent().remove();
+      var recNode = $('#rec' + id).parent();
+      AppManage.copyNodeRecommend = recNode.clone();
+      recNode.remove();
         $.each(recommend, function (key, val) {
           $('#rec' + key).prop('checked', true);
           $('#rec_order' + key).val(val.order);
@@ -160,7 +182,9 @@ function editApp(id) {
     // set promotion checked status
     if(snapshot.val().promotion_apps != 'undefined') {
       var promotion = snapshot.val().promotion_apps;
-      $('#pro' + id).parent().remove();
+      var proNode = $('#pro' + id).parent();
+      AppManage.copyNodePromotion = proNode.clone();
+      proNode.remove();
         $.each(promotion, function (key, val) {
           $('#pro' + key).prop('checked', true);
           $('#pro_order' + key).val(val.order);
@@ -168,9 +192,36 @@ function editApp(id) {
     }
 
   });
+
+  // Order recommend and promotion default DESC
+  sortUsingNestedText($('#recommend'), 'li', 'input.order_class', 'desc');
+  sortUsingNestedText($('#promotion'), 'li', 'input.order_class', 'desc');
+}
+
+// Order recommend and promotion
+function sortUsingNestedText(parent, childSelector, keySelector, type) {
+  var items = parent.children(childSelector).sort(function(a, b) {
+    var vA = $(keySelector, a).val();
+    var vB = $(keySelector, b).val();
+
+    if(type == 'desc') {
+      return vB - vA;
+    }
+
+    return vA - vB;
+  });
+
+  parent.append(items);
 }
 
 function reloadRecommendAndPromotion() {
+  if(AppManage.copyNodeRecommend != '' && AppManage.copyNodePromotion != '') {
+
+    // Append node
+    $('#recommend').get(0).appendChild(AppManage.copyNodeRecommend.get(0));
+    $('#promotion').get(0).appendChild(AppManage.copyNodePromotion.get(0));
+  }
+
   $('#recommend').find('li').each(function() {
     $(this).find('input[type=checkbox]').each(function() {
       $(this).prop('checked', false);
@@ -188,6 +239,8 @@ function reloadRecommendAndPromotion() {
       $(this).val('');
     })
   });
+
+
 }
 
 // Sets up shortcuts to Firebase features and initiate firebase auth.
@@ -322,9 +375,10 @@ AppManage.prototype.saveAppIcon = function(event) {
     this.messagesRef = this.database.ref('test_apps');
     // We add a message with a loading icon that will get updated with the shared image.
     var currentUser = this.auth.currentUser;
+    var id = this.packageName.value.split('.').join('_');
 
       // Upload the image to Firebase Storage.
-      this.storage.ref(currentUser.uid + '/' + Date.now() + '/' + file.name)
+      this.storage.ref('test_apps/' + id + '/' + file.name)
           .put(file, {contentType: file.type})
           .then(function(snapshot) {
 
@@ -367,9 +421,9 @@ AppManage.prototype.saveFeatureImage = function(event) {
     this.messagesRef = this.database.ref('test_apps');
     // We add a message with a loading icon that will get updated with the shared image.
     var currentUser = this.auth.currentUser;
-
+    var id = this.packageName.value.split('.').join('_');
     // Upload the image to Firebase Storage.
-    this.storage.ref(currentUser.uid + '/' + Date.now() + '/' + file.name)
+    this.storage.ref('test_apps/' + id + '/' + file.name)
         .put(file, {contentType: file.type})
         .then(function(snapshot) {
 
@@ -469,7 +523,7 @@ AppManage.prototype.displayMessage = function(key, val) {
     container.innerHTML = '<li>'
         + '<input class="check-app" type="checkbox" id="rec' + key + '" />'
         + '<label title="'+ val.app_name +'" class="label-checkbox" for="rec' + key + '"><img src="' + defaultImage +'" /></label>'
-        + '<input type="number" id="rec_order' + key + '"/>'
+        + '<input class="order_class" type="number" id="rec_order' + key + '"/>'
         + '</li>';
     div = container.firstChild;
     this.recommend.appendChild(div);
@@ -481,7 +535,7 @@ AppManage.prototype.displayMessage = function(key, val) {
     container2.innerHTML = '<li>'
         + '<input class="check-app" type="checkbox" id="pro' + key + '" />'
         + '<label title="'+ val.app_name +'" class="label-checkbox" for="pro' + key + '"><img src="' + defaultImage +'" /></label>'
-        + '<input type="number" id="pro_order' + key + '"/>'
+        + '<input class="order_class" type="number" id="pro_order' + key + '"/>'
         + '</li>';
     div2 = container2.firstChild;
     this.promotion.appendChild(div2);

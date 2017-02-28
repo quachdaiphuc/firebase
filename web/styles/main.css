@@ -354,3 +354,7 @@ input[type="number"][id^="pro_order"] {
 .table-list {
   clear: both;
 }
+.box-title {
+  padding: 10px 0px;
+  border-bottom: 1px solid #888888;
+}
