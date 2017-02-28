@@ -57,13 +57,15 @@ function AppManage() {
   this.signInButton.addEventListener('click', this.signIn.bind(this));
 
   // Events for image upload app icon.
-  this.submitImageButton.addEventListener('click', function() {
+  this.submitImageButton.addEventListener('click', function(e) {
+    e.preventDefault();
     this.mediaCapture.click();
   }.bind(this));
   this.mediaCapture.addEventListener('change', this.saveAppIcon.bind(this));
 
   // Events for image upload feature image
-  this.submitFeatureImage.addEventListener('click', function() {
+  this.submitFeatureImage.addEventListener('click', function(e) {
+    e.preventDefault();
     this.featureCapture.click();
   }.bind(this));
   this.featureCapture.addEventListener('change', this.saveFeatureImage.bind(this));
