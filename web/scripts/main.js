@@ -100,7 +100,7 @@ function AppManage() {
 // Loads chat messages history and listens for upcoming ones.
 AppManage.prototype.loadMessages = function() {
   // Reference to the /messages/ database path.
-  this.messagesRef = this.database.ref('test_apps');
+  this.messagesRef = this.database.ref('apps_v1');
   // Make sure we remove all previous listeners.
   this.messagesRef.off();
 
@@ -139,7 +139,7 @@ AppManage.prototype.loadMessages = function() {
 function editApp(id) {
   id = id.substring(4, id.length);
   var database = firebase.database();
-  database.ref('test_apps').child(id).on('value',function(snapshot) {
+  database.ref('apps_v1').child(id).on('value',function(snapshot) {
     $('#app_name').val(snapshot.val().app_name);
     $('#app_name').parent().addClass('is-dirty');
 
@@ -301,7 +301,7 @@ AppManage.prototype.saveData = function(e) {
     status = 'true';
   }
 
-  this.messagesRef = this.database.ref('test_apps');
+  this.messagesRef = this.database.ref('apps_v1');
 
   //varlidate
   if(this.appNameInput.value == '') {
@@ -382,13 +382,13 @@ AppManage.prototype.saveAppIcon = function(event) {
 
   // Check if the user is signed-in
   if (this.checkSignedInWithData()) {
-    this.messagesRef = this.database.ref('test_apps');
+    this.messagesRef = this.database.ref('apps_v1');
     // We add a message with a loading icon that will get updated with the shared image.
     var currentUser = this.auth.currentUser;
     var id = this.packageName.value.split('.').join('_');
 
       // Upload the image to Firebase Storage.
-      this.storage.ref('test_apps/' + id + '/' + file.name)
+      this.storage.ref('apps_v1/' + id + '/' + file.name)
           .put(file, {contentType: file.type})
           .then(function(snapshot) {
 
@@ -428,12 +428,12 @@ AppManage.prototype.saveFeatureImage = function(event) {
 
   // Check if the user is signed-in
   if (this.checkSignedInWithData()) {
-    this.messagesRef = this.database.ref('test_apps');
+    this.messagesRef = this.database.ref('apps_v1');
     // We add a message with a loading icon that will get updated with the shared image.
     var currentUser = this.auth.currentUser;
     var id = this.packageName.value.split('.').join('_');
     // Upload the image to Firebase Storage.
-    this.storage.ref('test_apps/' + id + '/' + file.name)
+    this.storage.ref('apps_v1/' + id + '/' + file.name)
         .put(file, {contentType: file.type})
         .then(function(snapshot) {
 
